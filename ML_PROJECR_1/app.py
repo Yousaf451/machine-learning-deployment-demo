@@ -148,8 +148,23 @@ st.markdown(
 # ----------------------------------------------------------------------------
 @st.cache_resource
 def load_model_and_metadata():
-    model_path = Path("best_classification_model.joblib")
-    metadata_path = Path("model_metadata.joblib")
+    BASE_DIR = Path(__file__).resolve().parent
+
+    model_path = BASE_DIR / "best_classification_model.joblib"
+    metadata_path = BASE_DIR / "model_metadata.joblib"
+
+    if not model_path.exists():
+        st.error(f"Model file not found: {model_path}")
+        st.stop()
+
+    if not metadata_path.exists():
+        st.error(f"Metadata file not found: {metadata_path}")
+        st.stop()
+
+    model = joblib.load(model_path)
+    metadata = joblib.load(metadata_path)
+
+    return model, metadata
 
     if not model_path.exists():
         st.error("Model file not found. Please ensure 'best_classification_model.joblib' is in the current directory.")
