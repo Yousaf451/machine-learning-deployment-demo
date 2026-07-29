@@ -1,7 +1,6 @@
-
 """
 Streamlit Web Application for Adult Income Classification
-Uses the pre-trained model and metadata without retraining.
+with enhanced UI (cards, hero image, modern styling).
 """
 
 import streamlit as st
@@ -11,7 +10,7 @@ import joblib
 from pathlib import Path
 
 # ----------------------------------------------------------------------------
-# 1. PAGE CONFIGURATION
+# PAGE CONFIG
 # ----------------------------------------------------------------------------
 st.set_page_config(
     page_title="Income Classifier",
@@ -21,104 +20,123 @@ st.set_page_config(
 )
 
 # ----------------------------------------------------------------------------
-# 2. CUSTOM CSS
+# CUSTOM CSS – same card styles, but adapted for Streamlit
 # ----------------------------------------------------------------------------
 st.markdown(
     """
     <style>
-        /* main container */
+        /* Main container */
         .main {
             padding: 1rem 2rem;
         }
-        /* card styling */
+        /* Hero image container */
+        .hero-container {
+            border-radius: 1.5rem;
+            overflow: hidden;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 30px rgba(0,20,40,0.15);
+        }
+        .hero-container img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            display: block;
+        }
+        /* Cards */
         .card {
-            background-color: #ffffff;
-            padding: 1.5rem;
-            border-radius: 1rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            margin-bottom: 1.5rem;
-            border: 1px solid #e9ecef;
+            background: #ffffff;
+            padding: 1.8rem 2rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+            border: 1px solid #eef2f6;
+            margin-bottom: 1.8rem;
         }
         .card-header {
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 0.75rem;
-            border-bottom: 1px solid #e9ecef;
-            padding-bottom: 0.5rem;
+            color: #0b1a33;
+            margin-bottom: 1.25rem;
+            border-bottom: 2px solid #f1f4f9;
+            padding-bottom: 0.7rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
         }
+        .card-header i {
+            color: #2563eb;
+        }
+        /* Prediction box */
         .prediction-box {
-            padding: 1.5rem;
-            border-radius: 0.75rem;
+            padding: 1.8rem 2rem;
+            border-radius: 1.25rem;
             text-align: center;
             font-size: 1.5rem;
-            font-weight: 600;
-            margin-top: 1rem;
-            background-color: #f8f9fa;
+            font-weight: 700;
+            margin-top: 0.5rem;
         }
         .prediction-positive {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            color: #065f46;
+            border: 1px solid #6ee7b7;
         }
         .prediction-negative {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            color: #991b1b;
+            border: 1px solid #fca5a5;
         }
-        .stButton button {
-            background-color: #007bff;
-            color: white;
-            font-weight: 500;
-            border-radius: 0.5rem;
-            padding: 0.5rem 2rem;
-            border: none;
-            transition: background-color 0.2s;
+        .confidence-bar {
+            height: 0.65rem;
+            background: #e2e8f0;
+            border-radius: 100px;
+            overflow: hidden;
+            margin-top: 0.3rem;
         }
-        .stButton button:hover {
-            background-color: #0069d9;
-            color: white;
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2563eb, #7c3aed);
+            border-radius: 100px;
+            transition: width 0.8s ease;
         }
         .footer {
-            margin-top: 3rem;
+            margin-top: 2.5rem;
             text-align: center;
-            color: #6c757d;
-            font-size: 0.9rem;
-            border-top: 1px solid #dee2e6;
-            padding-top: 1.5rem;
+            color: #94a3b8;
+            border-top: 1px solid #eef2f6;
+            padding-top: 1.8rem;
+            font-size: 0.85rem;
         }
-        .sidebar .sidebar-content {
-            background-color: #f8f9fa;
+        .stButton button {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            font-weight: 600;
+            border-radius: 100px;
+            padding: 0.7rem 2rem;
+            border: none;
+            width: 100%;
+            font-size: 1.1rem;
+            transition: all 0.25s ease;
         }
-        /* style select boxes and number inputs */
+        .stButton button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(37,99,235,0.35);
+        }
+        /* Form styling */
         .stSelectbox, .stNumberInput {
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.5rem;
         }
         .st-emotion-cache-1y4p8pa {
             max-width: 100%;
         }
-        .st-emotion-cache-1v0mbdj {
-            background-color: #f8f9fa;
+        /* Sidebar info */
+        .sidebar-info {
+            background: #f8fafc;
+            padding: 1.2rem 1.5rem;
+            border-radius: 1.25rem;
+            border: 1px solid #e9edf2;
+            margin-bottom: 1.5rem;
         }
-        hr {
-            margin: 1rem 0;
-        }
-        .label-highlight {
-            font-weight: 500;
-            color: #1f2937;
-        }
-        .confidence-bar {
-            margin-top: 0.5rem;
-            height: 1rem;
-            background-color: #e9ecef;
-            border-radius: 0.5rem;
-            overflow: hidden;
-        }
-        .confidence-fill {
-            height: 100%;
-            background-color: #007bff;
-            border-radius: 0.5rem;
-            transition: width 0.3s;
+        .sidebar-info p {
+            margin: 0.3rem 0;
         }
     </style>
 """,
@@ -126,11 +144,10 @@ st.markdown(
 )
 
 # ----------------------------------------------------------------------------
-# 3. LOAD RESOURCES (cached)
+# LOAD MODEL & METADATA (cached)
 # ----------------------------------------------------------------------------
 @st.cache_resource
 def load_model_and_metadata():
-    """Load the saved model and metadata from joblib files."""
     model_path = Path("best_classification_model.joblib")
     metadata_path = Path("model_metadata.joblib")
 
@@ -145,79 +162,44 @@ def load_model_and_metadata():
     metadata = joblib.load(metadata_path)
     return model, metadata
 
-
 def extract_categories_from_model(model):
-    """
-    Extract the categories for each categorical feature from the fitted
-    OneHotEncoder inside the pipeline.
-    Returns a dict: feature_name -> list of categories.
-    """
-    # The pipeline: preprocessor -> model
     preprocessor = model.named_steps['preprocessor']
-    # Get the categorical transformer
     cat_transformer = preprocessor.named_transformers_['cat']
-    # The one-hot encoder
     onehot = cat_transformer.named_steps['onehot']
-    # categories_ is a list of arrays, one per categorical feature
-    # in the order of categorical_features from metadata
-    categories_list = onehot.categories_
-    return categories_list
-
+    return onehot.categories_
 
 def get_classes_from_model(model):
-    """Return the target class labels from the model."""
-    # The final estimator is a classifier with classes_ attribute
-    estimator = model.named_steps['model']
-    return estimator.classes_
-
+    return model.named_steps['model'].classes_
 
 # ----------------------------------------------------------------------------
-# 4. MAIN APP
+# MAIN APP
 # ----------------------------------------------------------------------------
 def main():
-    # Load model and metadata
     model, metadata = load_model_and_metadata()
 
-    # Extract information from metadata
-    feature_names = metadata['feature_columns']      # list of all feature names in order
-    numeric_features = metadata['numeric_features']  # list of numeric columns
-    categorical_features = metadata['categorical_features']  # list of categorical columns
+    feature_names = metadata['feature_columns']
+    numeric_features = metadata['numeric_features']
+    categorical_features = metadata['categorical_features']
     target_column = metadata['target_column']
     model_name = metadata.get('best_model_name', 'Unknown')
 
-    # Extract categories from the fitted encoder
     categories_list = extract_categories_from_model(model)
-    # Build a dict mapping categorical feature -> list of categories
     cat_categories = {
         cat_feat: list(cats) for cat_feat, cats in zip(categorical_features, categories_list)
     }
 
-    # Get target classes
-    target_classes = get_classes_from_model(model)  # e.g., ['<=50K', '>50K']
-    # Determine which class is the positive one (assuming '>50K' is positive)
-    # We'll use the second class if it's >50K, otherwise we'll assume the positive is the one with higher income
-    # For safety, we'll check if '>50K' in target_classes
-    positive_class = None
-    if '>50K' in target_classes:
-        positive_class = '>50K'
-    elif len(target_classes) == 2:
-        # Usually the second is positive if sorted alphabetically: ['<=50K', '>50K']
-        positive_class = target_classes[1]
-    else:
-        positive_class = target_classes[-1]  # fallback
+    target_classes = get_classes_from_model(model)
+    positive_class = '>50K' if '>50K' in target_classes else target_classes[-1]
 
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------------
     # SIDEBAR
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------------
     with st.sidebar:
         st.markdown("## 📋 Instructions")
         st.markdown(
             """
-            Fill in the details of the individual below and click
-            **Predict Income** to get a classification.
-
-            The model was trained on the **Adult Income** dataset
-            and predicts whether income exceeds $50K/yr.
+            Fill in the details below and click **Predict Income**.
+            The model predicts whether income exceeds $50K/yr.
             """
         )
         st.markdown("---")
@@ -230,53 +212,47 @@ def main():
         st.markdown("---")
         st.caption("Built with Streamlit & scikit-learn")
 
-    # ------------------------------------------------------------------------
-    # MAIN AREA
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    # HERO IMAGE
+    # --------------------------------------------------------------------
+    # Use the same image URL (or you can store it locally)
+    hero_url = "https://raw.githubusercontent.com/Yousaf451/machine-learning-deployment-demo/main/ML_PROJECR_1/ChatGPT%20Image%20Jul%2028%2C%202026%2C%2010_22_57%20PM.png"
+    st.markdown(
+        f"""
+        <div class="hero-container">
+            <img src="{hero_url}" alt="Income Classification Banner" />
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # --------------------------------------------------------------------
+    # MAIN CONTENT
+    # --------------------------------------------------------------------
     st.markdown("## 💰 Income Classification")
     st.markdown("Enter the individual's attributes below.")
 
-    # Create a card for input fields
+    # Input card
     with st.container():
         st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.markdown('<div class="card-header">👤 Personal & Employment Details</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="card-header"><i class="fas fa-address-card"></i> Personal & Employment Details</div>',
+            unsafe_allow_html=True,
+        )
 
-        # We'll create two columns for better layout
         col1, col2 = st.columns(2)
-
-        # We need to collect values in a dict keyed by feature name
         input_values = {}
 
-        # Iterate over all features in the order they appear in feature_names
-        # but we will place numeric and categorical in separate columns to balance layout
-        # However, we must maintain the correct order for prediction.
-        # We'll store inputs in a dict with original feature names.
-
-        # First, collect all numeric inputs in col1 and categorical in col2?
-        # But we need to maintain the order; we can just create a dictionary and later create a DataFrame in correct order.
-
-        # Determine which features go to which column: we can alternate or put numeric in col1, categorical in col2.
-        # For simplicity, we'll put numeric in col1 and categorical in col2.
         with col1:
             st.markdown("#### 📊 Numerical Attributes")
             for feat in numeric_features:
-                # Determine if integer or float
-                # We can't know dtype from metadata, but we can infer from feature name or use step=1 for integer-like
-                # We'll treat all as float, but for age, education-num, hours-per-week, capital-gain, capital-loss, fnlwgt are ints
-                # We'll use step=1 for those that are likely integers, else step=0.01
-                # We'll just use step=1 for all numeric for simplicity because they are integers in this dataset.
-                # But we can check if the feature name contains 'age', 'fnlwgt', 'education-num', 'capital-gain', 'capital-loss', 'hours-per-week' - all ints.
-                # So we'll set step=1 for all numeric.
-                # However, we don't want to hardcode, but we can set step=1 for all.
-                # Alternatively, we can just use number_input with default step=1.
-                # To be safe, we'll use step=1 for all.
+                # For simplicity, use integer step for all numeric features
                 value = st.number_input(
                     f"{feat}",
                     min_value=0,
                     value=0,
                     step=1,
                     key=f"num_{feat}",
-                    help=f"Enter the value for {feat}"
                 )
                 input_values[feat] = value
 
@@ -284,52 +260,43 @@ def main():
             st.markdown("#### 🏷️ Categorical Attributes")
             for feat in categorical_features:
                 options = cat_categories[feat]
-                default_index = 0
-                # Set a sensible default (e.g., the most frequent category)
-                # We could also use the first category
                 value = st.selectbox(
                     f"{feat}",
                     options=options,
-                    index=default_index,
+                    index=0,
                     key=f"cat_{feat}",
-                    help=f"Select a value for {feat}"
                 )
                 input_values[feat] = value
 
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # ------------------------------------------------------------------------
-    # PREDICT BUTTON
-    # ------------------------------------------------------------------------
+    # Predict button
     predict_clicked = st.button("🔮 Predict Income", type="primary", use_container_width=True)
 
-    # ------------------------------------------------------------------------
-    # PREDICTION SECTION
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    # PREDICTION
+    # --------------------------------------------------------------------
     if predict_clicked:
         try:
-            # 1. Create a DataFrame with one row, columns in the exact order of feature_names
-            # We need to ensure we have all features
-            input_df = pd.DataFrame([input_values])  # dict keys are feature names
-            # Reorder columns to match feature_names
+            input_df = pd.DataFrame([input_values])
             input_df = input_df[feature_names]
 
-            # 2. Predict
             prediction = model.predict(input_df)[0]
-            prediction_proba = model.predict_proba(input_df)[0]  # array of probabilities for each class
+            prediction_proba = model.predict_proba(input_df)[0]
 
-            # 3. Determine confidence for positive class
-            # Map class to index
             class_to_idx = {cls: idx for idx, cls in enumerate(target_classes)}
-            pos_idx = class_to_idx.get(positive_class, 1)  # fallback to index 1
+            pos_idx = class_to_idx.get(positive_class, 1)
             confidence = prediction_proba[pos_idx] * 100
 
-            # 4. Display results in a card
-            st.markdown('<div class="card">', unsafe_allow_html=True)
-            st.markdown('<div class="card-header">📊 Prediction Result</div>', unsafe_allow_html=True)
-
-            # Determine color
             is_positive = (prediction == positive_class)
+
+            # Display result in a card
+            st.markdown('<div class="card">', unsafe_allow_html=True)
+            st.markdown(
+                '<div class="card-header"><i class="fas fa-chart-simple"></i> Prediction Result</div>',
+                unsafe_allow_html=True,
+            )
+
             if is_positive:
                 box_class = "prediction-positive"
                 label_text = f"✅ Predicted Income: **{prediction}** (Above $50K)"
@@ -339,24 +306,22 @@ def main():
 
             st.markdown(
                 f'<div class="prediction-box {box_class}">{label_text}</div>',
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
 
-            # Show confidence
+            # Confidence bar
             st.markdown(f"**Confidence:** {confidence:.2f}%")
-            # Progress bar
             st.markdown(
                 f"""
                 <div class="confidence-bar">
                     <div class="confidence-fill" style="width: {confidence:.2f}%;"></div>
                 </div>
                 """,
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
 
-            # Additional details expander
+            # Expandable details
             with st.expander("📈 Prediction Details"):
-                # Show probabilities for each class
                 prob_df = pd.DataFrame({
                     "Class": target_classes,
                     "Probability": prediction_proba * 100
@@ -371,12 +336,11 @@ def main():
             st.error(f"An error occurred during prediction: {e}")
             st.stop()
 
-    # ------------------------------------------------------------------------
-    # EXPANDER: Input Summary
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    # EXPANDERS (Input Summary & Model Info)
+    # --------------------------------------------------------------------
     with st.expander("📋 Input Summary"):
         if input_values:
-            # Show the values in a nice table
             summary_df = pd.DataFrame({
                 "Feature": list(input_values.keys()),
                 "Value": list(input_values.values())
@@ -385,9 +349,6 @@ def main():
         else:
             st.info("No inputs entered yet.")
 
-    # ------------------------------------------------------------------------
-    # EXPANDER: Model Information
-    # ------------------------------------------------------------------------
     with st.expander("🤖 Model Information"):
         st.markdown(f"**Model Type:** {model_name}")
         st.markdown(f"**Number of Features:** {len(feature_names)}")
@@ -398,9 +359,9 @@ def main():
         st.markdown("**Feature List:**")
         st.write(feature_names)
 
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------------
     # FOOTER
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------------
     st.markdown(
         """
         <div class="footer">
@@ -410,10 +371,5 @@ def main():
         unsafe_allow_html=True,
     )
 
-
-# ----------------------------------------------------------------------------
-# 5. ENTRY POINT
-# ----------------------------------------------------------------------------
 if __name__ == "__main__":
     main()
-
