@@ -1,4 +1,4 @@
-```python
+
 """
 Streamlit Web Application for Adult Income Classification
 Uses the pre-trained model and metadata without retraining.
@@ -416,4 +416,4 @@ def main():
 # ----------------------------------------------------------------------------
 if __name__ == "__main__":
     main()
-```
+
