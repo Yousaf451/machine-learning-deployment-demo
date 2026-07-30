@@ -114,28 +114,28 @@ used during model training.
 # Load Model
 # ============================================================
 
-MODEL_PATH = "saved_model/best_model.pkl"
+from pathlib import Path
+import joblib
+
+BASE_DIR = Path(__file__).resolve().parent
+MODEL_PATH = BASE_DIR / "saved_model" / "best_model.pkl"
+
+# Debug (Temporary)
+st.write("BASE_DIR:", BASE_DIR)
+st.write("MODEL PATH:", MODEL_PATH)
+st.write("Model Exists:", MODEL_PATH.exists())
 
 @st.cache_resource
-
 def load_model():
-
-    model = joblib.load(MODEL_PATH)
-
-    return model
+    return joblib.load(MODEL_PATH)
 
 try:
-
     model = load_model()
-
     st.sidebar.success("✅ Model Loaded Successfully")
 
 except Exception as e:
-
     st.error("Unable to load model.")
-
     st.exception(e)
-
     st.stop()
 
 # ============================================================
