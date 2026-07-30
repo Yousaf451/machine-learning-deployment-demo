@@ -1,0 +1,11 @@
+numpy
+torch
+torchvision
+ipykernel
+pandas
+scikit-learn
+joblib
+tensorflow
+streamlit
+matplotlib
+seaborn
