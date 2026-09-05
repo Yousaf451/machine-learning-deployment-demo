@@ -287,3 +287,5 @@ st.markdown("""
     Developed by <b>Muhammad Yousaf</b>
 </div>
 """, unsafe_allow_html=True)
+
+#live link: https://machine-learning-deployment-demo-4zjm9d2anoxchhgkwhhwyz.streamlit.app/
